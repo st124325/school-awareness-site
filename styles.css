@@ -899,7 +899,7 @@ body {
 }
 
 /* ============================================
-   ROLLING BALL INDICATOR
+   ROLLING BALL INDICATOR - COMPLEX ANIMATION
    ============================================ */
 
 .rolling-ball {
@@ -907,113 +907,413 @@ body {
     right: 30px;
     top: 50%;
     transform: translateY(-50%);
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     z-index: 999;
     pointer-events: none;
-    transition: top 0.1s ease-out;
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+.rolling-ball.visible {
+    opacity: 1;
+}
+
+/* Main ball container with 3D perspective */
+.ball-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    animation: ballFloat 3s ease-in-out infinite;
+}
+
+@keyframes ballFloat {
+    0%, 100% {
+        transform: translateY(0) rotateX(0deg) rotateY(0deg);
+    }
+    25% {
+        transform: translateY(-10px) rotateX(5deg) rotateY(10deg);
+    }
+    50% {
+        transform: translateY(0) rotateX(0deg) rotateY(0deg);
+    }
+    75% {
+        transform: translateY(10px) rotateX(-5deg) rotateY(-10deg);
+    }
+}
+
+/* Outer glow ring */
+.ball-glow {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(99, 102, 241, 0.6) 0%,
+        rgba(139, 92, 246, 0.4) 30%,
+        rgba(236, 72, 153, 0.2) 60%,
+        transparent 100%);
+    animation: glowPulse 2s ease-in-out infinite;
+    filter: blur(15px);
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.9;
+    }
+}
+
+/* Main ball sphere */
 .ball-inner {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: var(--gradient-1);
-    box-shadow: 
-        0 10px 30px rgba(99, 102, 241, 0.4),
-        inset -5px -5px 10px rgba(0, 0, 0, 0.2),
-        inset 5px 5px 10px rgba(255, 255, 255, 0.3);
     position: relative;
-    transition: transform 0.1s linear;
-    animation: ballRotate 0.5s linear infinite;
+    transform-style: preserve-3d;
+    background: linear-gradient(135deg, 
+        #667eea 0%,
+        #764ba2 25%,
+        #f093fb 50%,
+        #f5576c 75%,
+        #4facfe 100%);
+    background-size: 200% 200%;
+    animation: 
+        gradientShift 4s ease infinite,
+        ballRotate3D 8s linear infinite,
+        ballPulse 2s ease-in-out infinite;
+    box-shadow: 
+        0 0 40px rgba(99, 102, 241, 0.6),
+        0 0 80px rgba(139, 92, 246, 0.4),
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        inset -10px -10px 20px rgba(0, 0, 0, 0.3),
+        inset 10px 10px 20px rgba(255, 255, 255, 0.4),
+        inset 0 0 40px rgba(255, 255, 255, 0.1);
 }
 
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes ballRotate3D {
+    0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    }
+    25% {
+        transform: rotateX(90deg) rotateY(90deg) rotateZ(45deg);
+    }
+    50% {
+        transform: rotateX(180deg) rotateY(180deg) rotateZ(90deg);
+    }
+    75% {
+        transform: rotateX(270deg) rotateY(270deg) rotateZ(135deg);
+    }
+    100% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(180deg);
+    }
+}
+
+@keyframes ballPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Highlight reflection */
 .ball-inner::before {
     content: '';
     position: absolute;
     top: 15%;
     left: 25%;
-    width: 30%;
-    height: 30%;
-    background: rgba(255, 255, 255, 0.6);
+    width: 35%;
+    height: 35%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 100%);
     border-radius: 50%;
-    filter: blur(2px);
+    filter: blur(3px);
+    animation: highlightMove 3s ease-in-out infinite;
+    transform-style: preserve-3d;
 }
 
+@keyframes highlightMove {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(5px, -5px) scale(1.1);
+    }
+    50% {
+        transform: translate(-5px, 5px) scale(0.9);
+    }
+    75% {
+        transform: translate(5px, 5px) scale(1.05);
+    }
+}
+
+/* Secondary highlight */
 .ball-inner::after {
     content: '';
     position: absolute;
     top: 20%;
     left: 30%;
-    width: 20%;
-    height: 20%;
-    background: rgba(255, 255, 255, 0.8);
+    width: 25%;
+    height: 25%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 1) 0%,
+        rgba(255, 255, 255, 0.8) 40%,
+        transparent 80%);
     border-radius: 50%;
+    animation: highlightMove2 2.5s ease-in-out infinite;
 }
 
-@keyframes ballRotate {
+@keyframes highlightMove2 {
+    0%, 100% {
+        transform: translate(0, 0);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translate(-3px, 3px);
+        opacity: 0.6;
+    }
+}
+
+/* Orbital rings */
+.ball-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-radius: 50%;
+    animation: ringRotate 3s linear infinite;
+}
+
+.ball-ring:nth-child(1) {
+    width: 120%;
+    height: 120%;
+    animation-duration: 3s;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.ball-ring:nth-child(2) {
+    width: 140%;
+    height: 140%;
+    animation-duration: 4s;
+    animation-direction: reverse;
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.ball-ring:nth-child(3) {
+    width: 160%;
+    height: 160%;
+    animation-duration: 5s;
+    border-color: rgba(236, 72, 153, 0.2);
+}
+
+@keyframes ringRotate {
     from {
-        transform: rotate(0deg);
+        transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg);
     }
     to {
-        transform: rotate(360deg);
+        transform: translate(-50%, -50%) rotateX(360deg) rotateY(360deg);
+    }
+}
+
+/* Particle effects */
+.ball-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleFloat 3s ease-in-out infinite;
+}
+
+.ball-particle:nth-child(1) {
+    top: 10%;
+    left: 50%;
+    animation-delay: 0s;
+}
+
+.ball-particle:nth-child(2) {
+    top: 50%;
+    left: 10%;
+    animation-delay: 0.5s;
+}
+
+.ball-particle:nth-child(3) {
+    top: 90%;
+    left: 50%;
+    animation-delay: 1s;
+}
+
+.ball-particle:nth-child(4) {
+    top: 50%;
+    left: 90%;
+    animation-delay: 1.5s;
+}
+
+@keyframes particleFloat {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translate(20px, -20px) scale(1.5);
+        opacity: 0.3;
+    }
+}
+
+/* Scroll direction animations */
+.rolling-ball.scrolling-down .ball-container {
+    animation: ballFloat 3s ease-in-out infinite, 
+               ballRollDown 0.5s ease-out;
+}
+
+.rolling-ball.scrolling-up .ball-container {
+    animation: ballFloat 3s ease-in-out infinite, 
+               ballRollUp 0.5s ease-out;
+}
+
+@keyframes ballRollDown {
+    0% {
+        transform: translateY(0) rotateX(0deg);
+    }
+    100% {
+        transform: translateY(5px) rotateX(15deg);
+    }
+}
+
+@keyframes ballRollUp {
+    0% {
+        transform: translateY(0) rotateX(0deg);
+    }
+    100% {
+        transform: translateY(-5px) rotateX(-15deg);
     }
 }
 
 .rolling-ball.scrolling-down .ball-inner {
-    animation: ballRotateForward 0.3s linear infinite;
+    animation: 
+        gradientShift 4s ease infinite,
+        ballRotate3D 8s linear infinite,
+        ballPulse 2s ease-in-out infinite,
+        ballSpinForward 0.3s linear infinite;
 }
 
 .rolling-ball.scrolling-up .ball-inner {
-    animation: ballRotateBackward 0.3s linear infinite;
+    animation: 
+        gradientShift 4s ease infinite,
+        ballRotate3D 8s linear infinite,
+        ballPulse 2s ease-in-out infinite,
+        ballSpinBackward 0.3s linear infinite;
 }
 
-@keyframes ballRotateForward {
+@keyframes ballSpinForward {
     from {
-        transform: rotate(0deg);
+        transform: rotateZ(0deg);
     }
     to {
-        transform: rotate(360deg);
+        transform: rotateZ(360deg);
     }
 }
 
-@keyframes ballRotateBackward {
+@keyframes ballSpinBackward {
     from {
-        transform: rotate(360deg);
+        transform: rotateZ(360deg);
     }
     to {
-        transform: rotate(0deg);
+        transform: rotateZ(0deg);
     }
 }
 
-/* Trail effect for the ball */
+/* Trail effect with multiple layers */
 .rolling-ball::after {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, 
+        rgba(99, 102, 241, 0.4) 0%,
+        rgba(139, 92, 246, 0.3) 30%,
+        rgba(236, 72, 153, 0.2) 60%,
+        transparent 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .rolling-ball.moving::after {
     opacity: 1;
-    animation: ballTrail 0.5s ease-out;
+    animation: ballTrailComplex 0.8s ease-out;
 }
 
-@keyframes ballTrail {
-    from {
-        transform: translate(-50%, -50%) scale(0.8);
+@keyframes ballTrailComplex {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(180deg);
+        opacity: 0.3;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Wave distortion effect */
+.ball-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        transparent 40%,
+        rgba(99, 102, 241, 0.1) 50%,
+        transparent 60%);
+    animation: waveDistort 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes waveDistort {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
         opacity: 0.5;
     }
-    to {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 0;
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.2;
     }
 }
 

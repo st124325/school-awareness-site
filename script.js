@@ -348,7 +348,7 @@ function onScroll() {
 window.addEventListener('scroll', onScroll, { passive: true });
 
 // ============================================
-// ROLLING BALL INDICATOR
+// ROLLING BALL INDICATOR - COMPLEX ANIMATION
 // ============================================
 
 const rollingBall = document.getElementById('rollingBall');
@@ -356,59 +356,109 @@ let lastScrollY = window.scrollY;
 let scrollDirection = 'down';
 let ballRotation = 0;
 let isScrolling = false;
+let targetSection = null;
+
+// Находим среднюю секцию (Impact section)
+function findTargetSection() {
+    const impactSection = document.getElementById('impact');
+    if (impactSection) {
+        targetSection = impactSection;
+        return impactSection;
+    }
+    // Если нет Impact, берем Facts
+    return document.getElementById('facts') || document.querySelector('section:nth-of-type(2)');
+}
 
 function updateRollingBall() {
     if (!rollingBall) return;
     
+    if (!targetSection) {
+        targetSection = findTargetSection();
+    }
+    
+    if (!targetSection) return;
+    
     const currentScrollY = window.scrollY;
     const scrollDelta = currentScrollY - lastScrollY;
-    
-    // Определяем направление скролла
-    if (scrollDelta > 0) {
-        scrollDirection = 'down';
-        rollingBall.classList.remove('scrolling-up');
-        rollingBall.classList.add('scrolling-down');
-    } else if (scrollDelta < 0) {
-        scrollDirection = 'up';
-        rollingBall.classList.remove('scrolling-down');
-        rollingBall.classList.add('scrolling-up');
-    }
-    
-    // Вычисляем позицию шарика (от 20% до 80% высоты экрана)
     const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-    const scrollableHeight = documentHeight - windowHeight;
-    const scrollProgress = currentScrollY / scrollableHeight;
     
-    // Ограничиваем позицию шарика
-    const minTop = windowHeight * 0.2;
-    const maxTop = windowHeight * 0.8;
-    const ballTop = minTop + (maxTop - minTop) * scrollProgress;
+    // Получаем границы целевой секции
+    const sectionRect = targetSection.getBoundingClientRect();
+    const sectionTop = sectionRect.top + currentScrollY;
+    const sectionBottom = sectionTop + sectionRect.height;
     
-    rollingBall.style.top = `${ballTop}px`;
+    // Проверяем, находится ли пользователь в области секции
+    const viewportTop = currentScrollY;
+    const viewportBottom = currentScrollY + windowHeight;
     
-    // Вращение шарика в зависимости от направления
-    if (scrollDirection === 'down') {
-        ballRotation += Math.abs(scrollDelta) * 2;
-    } else {
-        ballRotation -= Math.abs(scrollDelta) * 2;
-    }
+    const isInSection = viewportBottom >= sectionTop && viewportTop <= sectionBottom;
     
-    const ballInner = rollingBall.querySelector('.ball-inner');
-    if (ballInner) {
-        ballInner.style.transform = `rotate(${ballRotation}deg)`;
-    }
-    
-    // Добавляем эффект движения
-    if (Math.abs(scrollDelta) > 0) {
-        rollingBall.classList.add('moving');
-        isScrolling = true;
+    if (isInSection) {
+        // Показываем шарик только в средней части секции
+        const sectionMiddle = sectionTop + sectionRect.height / 2;
+        const sectionVisibleTop = Math.max(sectionTop, viewportTop);
+        const sectionVisibleBottom = Math.min(sectionBottom, viewportBottom);
+        const visibleHeight = sectionVisibleBottom - sectionVisibleTop;
         
+        // Вычисляем позицию шарика относительно видимой части секции
+        const relativePosition = (currentScrollY + windowHeight / 2 - sectionVisibleTop) / visibleHeight;
+        const clampedPosition = Math.max(0, Math.min(1, relativePosition));
+        
+        // Ограничиваем область появления (только средние 60% секции)
+        const minPosition = 0.2;
+        const maxPosition = 0.8;
+        
+        if (clampedPosition >= minPosition && clampedPosition <= maxPosition) {
+            const ballTop = sectionVisibleTop + (clampedPosition - minPosition) / (maxPosition - minPosition) * visibleHeight * 0.6;
+            rollingBall.style.top = `${ballTop}px`;
+            rollingBall.classList.add('visible');
+        } else {
+            rollingBall.classList.remove('visible');
+        }
+    } else {
+        rollingBall.classList.remove('visible');
+    }
+    
+    // Определяем направление скролла для анимации
+    if (Math.abs(scrollDelta) > 0 && rollingBall.classList.contains('visible')) {
+        if (scrollDelta > 0) {
+            scrollDirection = 'down';
+            rollingBall.classList.remove('scrolling-up');
+            rollingBall.classList.add('scrolling-down');
+        } else {
+            scrollDirection = 'up';
+            rollingBall.classList.remove('scrolling-down');
+            rollingBall.classList.add('scrolling-up');
+        }
+        
+        // Сложное вращение с ускорением
+        const rotationSpeed = Math.min(Math.abs(scrollDelta) * 3, 30);
+        if (scrollDirection === 'down') {
+            ballRotation += rotationSpeed;
+        } else {
+            ballRotation -= rotationSpeed;
+        }
+        
+        // Применяем вращение к контейнеру
+        const ballContainer = rollingBall.querySelector('.ball-container');
+        if (ballContainer) {
+            ballContainer.style.transform = `rotateZ(${ballRotation}deg)`;
+        }
+        
+        // Добавляем эффект движения с задержкой
+        rollingBall.classList.add('moving');
         clearTimeout(rollingBall.scrollTimeout);
         rollingBall.scrollTimeout = setTimeout(() => {
             rollingBall.classList.remove('moving');
-            isScrolling = false;
-        }, 150);
+        }, 300);
+    }
+    
+    // Динамическое изменение размера в зависимости от скорости скролла
+    if (Math.abs(scrollDelta) > 5 && rollingBall.classList.contains('visible')) {
+        const scale = 1 + Math.min(Math.abs(scrollDelta) / 100, 0.2);
+        rollingBall.style.transform = `scale(${scale})`;
+    } else {
+        rollingBall.style.transform = 'scale(1)';
     }
     
     lastScrollY = currentScrollY;
@@ -426,8 +476,14 @@ window.addEventListener('scroll', () => {
     }
 }, { passive: true });
 
-// Инициализация позиции шарика
+// Инициализация при загрузке
 window.addEventListener('load', () => {
+    targetSection = findTargetSection();
+    updateRollingBall();
+});
+
+// Обновление при изменении размера окна
+window.addEventListener('resize', () => {
     updateRollingBall();
 });
 
