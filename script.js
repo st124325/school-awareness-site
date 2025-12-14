@@ -348,9 +348,94 @@ function onScroll() {
 window.addEventListener('scroll', onScroll, { passive: true });
 
 // ============================================
+// ROLLING BALL INDICATOR
+// ============================================
+
+const rollingBall = document.getElementById('rollingBall');
+let lastScrollY = window.scrollY;
+let scrollDirection = 'down';
+let ballRotation = 0;
+let isScrolling = false;
+
+function updateRollingBall() {
+    if (!rollingBall) return;
+    
+    const currentScrollY = window.scrollY;
+    const scrollDelta = currentScrollY - lastScrollY;
+    
+    // Определяем направление скролла
+    if (scrollDelta > 0) {
+        scrollDirection = 'down';
+        rollingBall.classList.remove('scrolling-up');
+        rollingBall.classList.add('scrolling-down');
+    } else if (scrollDelta < 0) {
+        scrollDirection = 'up';
+        rollingBall.classList.remove('scrolling-down');
+        rollingBall.classList.add('scrolling-up');
+    }
+    
+    // Вычисляем позицию шарика (от 20% до 80% высоты экрана)
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollableHeight = documentHeight - windowHeight;
+    const scrollProgress = currentScrollY / scrollableHeight;
+    
+    // Ограничиваем позицию шарика
+    const minTop = windowHeight * 0.2;
+    const maxTop = windowHeight * 0.8;
+    const ballTop = minTop + (maxTop - minTop) * scrollProgress;
+    
+    rollingBall.style.top = `${ballTop}px`;
+    
+    // Вращение шарика в зависимости от направления
+    if (scrollDirection === 'down') {
+        ballRotation += Math.abs(scrollDelta) * 2;
+    } else {
+        ballRotation -= Math.abs(scrollDelta) * 2;
+    }
+    
+    const ballInner = rollingBall.querySelector('.ball-inner');
+    if (ballInner) {
+        ballInner.style.transform = `rotate(${ballRotation}deg)`;
+    }
+    
+    // Добавляем эффект движения
+    if (Math.abs(scrollDelta) > 0) {
+        rollingBall.classList.add('moving');
+        isScrolling = true;
+        
+        clearTimeout(rollingBall.scrollTimeout);
+        rollingBall.scrollTimeout = setTimeout(() => {
+            rollingBall.classList.remove('moving');
+            isScrolling = false;
+        }, 150);
+    }
+    
+    lastScrollY = currentScrollY;
+}
+
+// Throttle для оптимизации
+let scrollTimeout;
+window.addEventListener('scroll', () => {
+    if (!scrollTimeout) {
+        window.requestAnimationFrame(() => {
+            updateRollingBall();
+            scrollTimeout = null;
+        });
+        scrollTimeout = true;
+    }
+}, { passive: true });
+
+// Инициализация позиции шарика
+window.addEventListener('load', () => {
+    updateRollingBall();
+});
+
+// ============================================
 // CONSOLE MESSAGE
 // ============================================
 
 console.log('%c🎓 Правда о Гимназии №18', 'font-size: 20px; font-weight: bold; color: #667eea;');
 console.log('%cЭтот сайт создан для информирования общественности о проблемах в системе образования.', 'font-size: 12px; color: #6b7280;');
+
 

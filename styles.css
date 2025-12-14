@@ -899,6 +899,132 @@ body {
 }
 
 /* ============================================
+   ROLLING BALL INDICATOR
+   ============================================ */
+
+.rolling-ball {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    z-index: 999;
+    pointer-events: none;
+    transition: top 0.1s ease-out;
+}
+
+.ball-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--gradient-1);
+    box-shadow: 
+        0 10px 30px rgba(99, 102, 241, 0.4),
+        inset -5px -5px 10px rgba(0, 0, 0, 0.2),
+        inset 5px 5px 10px rgba(255, 255, 255, 0.3);
+    position: relative;
+    transition: transform 0.1s linear;
+    animation: ballRotate 0.5s linear infinite;
+}
+
+.ball-inner::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 25%;
+    width: 30%;
+    height: 30%;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    filter: blur(2px);
+}
+
+.ball-inner::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 30%;
+    width: 20%;
+    height: 20%;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+}
+
+@keyframes ballRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rolling-ball.scrolling-down .ball-inner {
+    animation: ballRotateForward 0.3s linear infinite;
+}
+
+.rolling-ball.scrolling-up .ball-inner {
+    animation: ballRotateBackward 0.3s linear infinite;
+}
+
+@keyframes ballRotateForward {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ballRotateBackward {
+    from {
+        transform: rotate(360deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+/* Trail effect for the ball */
+.rolling-ball::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.rolling-ball.moving::after {
+    opacity: 1;
+    animation: ballTrail 0.5s ease-out;
+}
+
+@keyframes ballTrail {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.5;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+    .rolling-ball {
+        display: none;
+    }
+}
+
+/* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
@@ -976,4 +1102,5 @@ body {
         text-align: center;
     }
 }
+
 
